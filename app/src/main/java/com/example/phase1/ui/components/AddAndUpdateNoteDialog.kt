@@ -26,6 +26,7 @@ fun AddNote(
     val context = LocalContext.current
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
+    var colorId by remember { mutableStateOf(0) }
     val text = if (isUpdate) "Update Note" else "Add Note"
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -35,6 +36,7 @@ fun AddNote(
             viewModel.getNoteById(noteId).collect { note ->
                 title = note?.title ?: ""
                 content = note?.description ?: ""
+                colorId = note?.colorId ?: 0
             }
         }
     }
@@ -116,11 +118,11 @@ fun AddNote(
             Button(
                 onClick = {
                     if (isUpdate){
-                        viewModel.updateNote(NoteData(title = title, description = content, id = noteId))
+                        viewModel.updateNote(NoteData(title = title, description = content, id = noteId, colorId = colorId))
 
                     }
                     else{
-                        viewModel.addNote(NoteData(title = title, description = content))
+                        viewModel.addNote(NoteData(title = title, description = content, colorId = (0..5).random(), createdAt = System.currentTimeMillis()))
 
                     }
                 },
@@ -134,3 +136,4 @@ fun AddNote(
         }
     }
 }
+

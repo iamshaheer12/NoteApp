@@ -1,6 +1,7 @@
 package com.example.phase1.ui.components
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.phase1.core.CustomColor
 import com.example.phase1.data.NoteData
 import com.example.phase1.viewmodel.NoteViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -56,6 +58,9 @@ fun NoteDetailsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Note Details") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = CustomColor.COLOR_LIST[note?.colorId?:0],
+                ),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")

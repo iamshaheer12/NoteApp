@@ -156,7 +156,7 @@ fun AllNotes(
                 confirmValueChange = { dismissValue ->
                     if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
                         showDeleteDialog = true
-                        false // Wait for dialog confirmation
+                        false
                     } else {
                         false
                     }
