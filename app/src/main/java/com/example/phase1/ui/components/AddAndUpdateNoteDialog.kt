@@ -1,8 +1,10 @@
+import android.provider.CalendarContract.Colors
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -10,6 +12,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import com.example.phase1.R
+import com.example.phase1.core.CustomColor
 import com.example.phase1.data.NoteData
 import com.example.phase1.viewmodel.NoteViewModel
 import kotlinx.coroutines.launch
@@ -27,6 +30,8 @@ fun AddNote(
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
     var colorId by remember { mutableStateOf(0) }
+    var note1 by remember { mutableStateOf<NoteData?>(null) }
+
     val text = if (isUpdate) "Update Note" else "Add Note"
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -34,6 +39,7 @@ fun AddNote(
     LaunchedEffect(noteId) {
         if (isUpdate && noteId.isNotBlank()) {
             viewModel.getNoteById(noteId).collect { note ->
+                note1 = note
                 title = note?.title ?: ""
                 content = note?.description ?: ""
                 colorId = note?.colorId ?: 0
@@ -51,8 +57,15 @@ fun AddNote(
                     // Clear fields
                     title = ""
                     content = ""
-                    // Optionally go back
-                    // navController.popBackStack()
+                    if (isUpdate) {
+                        navController.navigate("home_screen") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    } else {
+                        navController.popBackStack()
+                    }
+
+
                 }
 
                 is NoteViewModel.NoteEvent.ShowError -> {
@@ -69,6 +82,9 @@ fun AddNote(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor =if(isUpdate) CustomColor.COLOR_LIST[note1?.colorId?:0] else CustomColor.COLOR_LIST[3],
+                ),
                 title = {
                     Row {
                         IconButton(
@@ -122,14 +138,22 @@ fun AddNote(
 
                     }
                     else{
-                        viewModel.addNote(NoteData(title = title, description = content, colorId = (0..5).random(), createdAt = System.currentTimeMillis()))
+                        viewModel.addNote(NoteData(title = title, description = content, colorId = (0..4).random(), createdAt = System.currentTimeMillis()))
 
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = title.isNotBlank() && content.isNotBlank()
+                enabled = title.isNotBlank() && content.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor =  if(isUpdate) CustomColor.COLOR_LIST[note1?.colorId?:3] else CustomColor.COLOR_LIST[3],
+                    contentColor =Color.DarkGray,
+                    disabledContainerColor = Color.Gray.copy(alpha = 0.3f),
+                    disabledContentColor = Color.DarkGray.copy(alpha = 0.5f),
+                )
+
+
             ) {
                 Text(text)
             }

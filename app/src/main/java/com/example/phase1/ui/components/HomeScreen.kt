@@ -1,6 +1,10 @@
 package com.example.phase1.ui.components
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.TweenSpec
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.example.phase1.core.CustomAnimation
 import com.example.phase1.data.NoteData
 import com.example.phase1.data.NoteState
 import com.example.phase1.viewmodel.NoteViewModel
@@ -190,39 +195,42 @@ fun AllNotes(
                 )
             }
 
-            SwipeToDismissBox(
-                state = dismissState,
-                modifier = Modifier.clip(RoundedCornerShape(16.dp)),
-                backgroundContent = {
-                    val color = when (dismissState.dismissDirection) {
-                        SwipeToDismissBoxValue.EndToStart -> Color.Red
-                        else -> Color.Transparent
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(color)
-                            .padding(horizontal = 20.dp)
-                        ,
+            CustomAnimation.AnimatedItem(true) {
+                SwipeToDismissBox(
+                    state = dismissState,
+                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    backgroundContent = {
+                        val color = when (dismissState.dismissDirection) {
+                            SwipeToDismissBoxValue.EndToStart -> Color.Red
+                            else -> Color.Transparent
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(color)
+                                .padding(horizontal = 20.dp),
 
-                        contentAlignment = Alignment.CenterEnd
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete",
-                            tint = Color.White
+                            contentAlignment = Alignment.CenterEnd
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    enableDismissFromStartToEnd = false,
+                    enableDismissFromEndToStart = true,
+                    content = {
+                        NoteItemCard(
+                            item = note,
+                            onItemClick = { onItemClick(note) }
                         )
                     }
-                },
-                enableDismissFromStartToEnd = false, // Disable left-to-right swipe
-                enableDismissFromEndToStart = true,  // Enable right-to-left swipe
-                content = {
-                    NoteItemCard(
-                        item = note,
-                        onItemClick = { onItemClick(note) }
-                    )
-                }
-            )
+                )
+            }
+
+
         }
     }
 }

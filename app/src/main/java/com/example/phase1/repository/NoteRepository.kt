@@ -19,13 +19,15 @@ class NoteRepository(private val db: FirebaseFirestore) {
         docRef.set(noteWithId).await()
         Result.success(Unit)
     } catch (e: Exception) {
+        Log.e("NoteRepository", "Error adding note: ${e.message}", e)
         Result.failure(e)
     }
 
     suspend fun updateNote(note: NoteData): Result<Unit> = try {
-        notesCollection.document(note.id?:"").set(note).await()
+        notesCollection.document(note.id ?: "").set(note).await()
         Result.success(Unit)
     } catch (e: Exception) {
+        Log.e("NoteRepository", "Error updating note: ${e.message}", e)
         Result.failure(e)
     }
 
@@ -33,23 +35,30 @@ class NoteRepository(private val db: FirebaseFirestore) {
         notesCollection.document(noteId).delete().await()
         Result.success(Unit)
     } catch (e: Exception) {
+        Log.e("NoteRepository", "Error deleting note $noteId: ${e.message}", e)
         Result.failure(e)
     }
 
     fun getNotesFlow(): Flow<List<NoteData>> = callbackFlow {
-        val listener = FirebaseFirestore.getInstance()
-            .collection("notes")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
+        try {
+            val listener = FirebaseFirestore.getInstance()
+                .collection("notes")
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e("NoteRepository", "Error fetching notes: ${error.message}", error)
+                        close(error)
+                        return@addSnapshotListener
+                    }
+                    val notes = snapshot?.toObjects(NoteData::class.java).orEmpty()
+                    trySend(notes).isSuccess
                 }
-                val notes = snapshot?.toObjects(NoteData::class.java).orEmpty()
-                trySend(notes)
-            }
-
-        awaitClose { listener.remove() }
+            awaitClose { listener.remove() }
+        } catch (e: Exception) {
+            Log.e("NoteRepository", "Error setting up notes listener: ${e.message}", e)
+            close(e)
+        }
     }
+
     fun getNoteById(noteId: String): Flow<NoteData?> = callbackFlow {
         if (noteId.isBlank()) {
             Log.e("NoteRepository", "Invalid noteId: '$noteId'")
@@ -63,7 +72,7 @@ class NoteRepository(private val db: FirebaseFirestore) {
             Log.d("NoteRepository", "Fetching note with ID: $noteId, path: ${docRef.path}")
             val listener = docRef.addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e("NoteRepository", "Error fetching note $noteId: ${error.message}")
+                    Log.e("NoteRepository", "Error fetching note $noteId: ${error.message}", error)
                     trySend(null).isSuccess
                     return@addSnapshotListener
                 }
@@ -77,10 +86,10 @@ class NoteRepository(private val db: FirebaseFirestore) {
                 trySend(note).isSuccess
             }
             awaitClose { listener.remove() }
-        } catch (e: IllegalArgumentException) {
-            Log.e("NoteRepository", "Invalid document reference for noteId: $noteId", e)
+        } catch (e: Exception) {
+            Log.e("NoteRepository", "Error setting up note listener for noteId: $noteId", e)
             trySend(null).isSuccess
-            close()
+            close(e)
         }
     }
 }
